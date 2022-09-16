@@ -4,12 +4,13 @@ import express from "express"
 import cors from 'cors';
 import { useContainer, useExpressServer } from 'routing-controllers';
 import { Container, Service } from 'typedi';
+import { UserController } from './Controllers/UserController';
 
 @Service()
 class Server{
 
     private app : express.Application;
-    private controllers = [];
+    private controllers = [UserController];
 
     public constructor() {
       this.app = express();
