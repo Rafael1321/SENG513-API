@@ -1,14 +1,13 @@
+import 'reflect-metadata';
+
 import { Post, Req, Res } from "routing-controllers";
 import { Inject, Service } from "typedi";
 import { UserService } from '../Services/UserService';
 import { CResponse, StatusCodes } from '../Util/Helpers';
-
-type Test = {
-    name : string;
-}
+import { IUserController } from "./IUserController";
 
 @Service()
-export class UserController{
+export class UserController implements IUserController {
 
     @Inject()
     private userService! : UserService;

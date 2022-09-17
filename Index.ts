@@ -5,6 +5,16 @@ import cors from 'cors';
 import { useContainer, useExpressServer } from 'routing-controllers';
 import { Container, Service } from 'typedi';
 import { UserController } from './Controllers/UserController';
+import * as dotenv from 'dotenv';
+import { MongoContext } from './Context/MongoContext';
+import { UserRepository } from './Repositories/UserRepository';
+import { UserService } from './Services/UserService';
+import { IMongoContext } from './Context/IMongoContext';
+
+import { IUserController } from './Controllers/IUserController';
+import { IUserService } from './Services/IUserService';
+import { IUserRepository } from './Repositories/IUserRepository';
+
 
 @Service()
 class Server{
@@ -14,6 +24,8 @@ class Server{
 
     public constructor() {
       this.app = express();
+      dotenv.config();
+
       this.configMiddleware();  // Middleware
       this.configDI();          // Dependency injection
       this.configRoutes();      // Routing REST Controllers
@@ -33,7 +45,10 @@ class Server{
     }
 
     private configDI(){
-        useContainer(Container)
+        useContainer(Container);
+        Container.set(IMongoContext, Container.get(MongoContext));
+        Container.set(IUserService, Container.get(UserService));
+        Container.set(IUserRepository, Container.get(UserRepository));
         console.info(`Dependency injection configured...`);
     }
 

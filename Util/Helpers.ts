@@ -1,6 +1,4 @@
-// Custom Response
-// Wrapper of type Response
-
+// Used for return values of Services and Repositories
 export enum StatusCodes {
     OK = 200,
     CreatedAtRoute = 201,
@@ -44,4 +42,9 @@ export class CResponse{
 
 export type Message = {
     msg : string;
+}
+
+// Used for depedency Injection
+export interface ClassType<T = any> {
+    new (...args: any[]): T;
 }

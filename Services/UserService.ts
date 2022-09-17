@@ -1,10 +1,13 @@
+import 'reflect-metadata';
+
 import { Inject, Service } from "typedi";
 import { User } from "../Models/User";
 import { UserRepository } from "../Repositories/UserRepository";
 import { CResponse, Message, StatusCodes, Types } from "../Util/Helpers";
+import { IUserService } from './IUserService';
 
 @Service()
-export class UserService{
+export class UserService implements IUserService{
 
     @Inject()
     private userRepository! : UserRepository;
