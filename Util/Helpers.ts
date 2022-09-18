@@ -15,7 +15,7 @@ export enum Types {
     Empty = 3
 }
 
-export class CResponse{
+export class CustomResponse{
 
     private data : object;
     private type : Types;
