@@ -14,7 +14,6 @@ const dbConfig = {
 };
 
 const connectionURI = `mongodb://${dbConfig.hostname}:${dbConfig.port}/${dbConfig.database}`
-console.log(connectionURI)
 mongoose.connect(connectionURI);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
@@ -30,8 +29,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // Route Configuration
+const userRoutes = require("./routes/users");
+
+app.use("/", userRoutes)
 
 // Starting the node.js server
 app.listen(appConfig.port, () => {
     console.log("Serving on port 3000");
 });
+
