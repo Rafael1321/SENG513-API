@@ -2,30 +2,26 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
-    id: {
-        type: String,
-        required : true,
-        unique : true,
-    },
     riotId: {
         type: String,
-        required: true, 
-        unique: true
+        required: false, 
+        unique: false
     },
-    name: {
+    displayName: {
         type: String,
         required: true, 
         unique: false
     },
-    username: {
+    email: {
         type: String,
-        required: true, 
-        unique: true
+        required: true,
+        unique: true,               
     },
     password: {
         type: String,
         required: true,
-        unique: false
+        unique: false,
+        select: false
     },
     isAvatarSet: {
         type: Boolean,
@@ -39,11 +35,6 @@ const UserSchema = new Schema({
         unique: false,
         default: ""
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true,               
-    }
 });
 
 module.exports = mongoose.model("User", UserSchema);
