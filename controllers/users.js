@@ -45,7 +45,7 @@ module.exports.registerUser = async (req, res) => {
 
         await newUser.save();
 
-        return res.type('json').status(201).send({data: _.pick(newUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe'])});  
+        return res.type('json').status(201).send( _.pick(newUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe']));  
 
     }catch(err){
         return res.type('json').status(500).send({data:err.toString()});   
@@ -70,7 +70,7 @@ module.exports.loginUser = async (req, res) => {
             if(!isPasswordValid){
                 return res.type('json').status(404).send({data:"The password is incorrect."});   
             }
-            return res.type('json').status(200).send({"data": _.pick(searchedUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe'])}); 
+            return res.type('json').status(200).send(_.pick(searchedUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe'])); 
         }
        
     }catch(err) {
