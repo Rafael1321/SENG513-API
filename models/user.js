@@ -58,7 +58,7 @@ const UserSchema = new Schema({
         type: Number,
         required: false,
         unique: false,
-        deafult: 0
+        default: 0
     },
     gender : {
         type: Number,
