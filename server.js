@@ -24,7 +24,7 @@ db.once("open", () => {
 });
 
 // App configuration
-const appConfig = { port : process.env.APP_PORT ?? '3000' }
+const appConfig = { port : process.env.APP_PORT ?? '5000' }
 
 const app = express();
 app.use(express.json());
