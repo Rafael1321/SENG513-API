@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Rafael1321/SENG513-API#readme",
   "dependencies": {
+    "axios": "^0.21.1",
     "bcrypt": "^5.0.1",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
