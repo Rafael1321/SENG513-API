@@ -32,7 +32,7 @@ module.exports.registerUser = async (req, res) => {
 
         const newUser = new user({ 
             riotId: extraData.puuid,
-            displayName: !displayName?'':displayName,
+            displayName: !displayName?gameName:displayName,
             gameName: gameName,
             tagLine: tagLine,
             email: email,
