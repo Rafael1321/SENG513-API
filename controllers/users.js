@@ -56,19 +56,19 @@ module.exports.loginUser = async (req, res) => {
     try{
         const {email, password} = req.body;
 
-        if(!email) return res.type('json').status(404).send({data:'The username is missing'});   
-        if(!password) return res.type('json').status(404).send({data:'The password is missing'});   
+        if(!email) return res.type('json').status(404).send('The username is missing');   
+        if(!password) return res.type('json').status(404).send('The password is missing');   
         
         // Check if the username exists
         var searchedUser = await user.findOne({email:email}).select("+password").exec();
         
         if (!searchedUser){             
-            return res.type('json').status(404).send({data:"User was not found."});  
+            return res.type('json').status(404).send("User was not found.");  
         }else{
             // Check if the passwords match
             const isPasswordValid = await bcrypt.compare(password, searchedUser.password);
             if(!isPasswordValid){
-                return res.type('json').status(404).send({data:"The password is incorrect."});   
+                return res.type('json').status(404).send("The password is incorrect.");   
             }
             return res.type('json').status(200).send(_.pick(searchedUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe'])); 
         }
