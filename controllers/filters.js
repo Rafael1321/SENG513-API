@@ -4,7 +4,7 @@ const _ = require('lodash');
 module.exports.retrieve = async (req, res) => {
 
     try{
-        const {userId} = req.body;
+        const userId = req.params.userId;
 
         // Basic Validation
         if(!userId) return res.type('json').status(400).send('The user id is missing');   

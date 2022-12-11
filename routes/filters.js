@@ -3,7 +3,7 @@ const router = express.Router({ mergeParams: true });
 
 const filters = require("../controllers/filters");
 
-router.route('/filters')
+router.route('/filters/:userId')
       .get(filters.retrieve);
 
 router.route('/filters')
