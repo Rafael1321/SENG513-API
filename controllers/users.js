@@ -78,8 +78,31 @@ module.exports.loginUser = async (req, res) => {
     }
 };
 
-// Add end-point for changing some aspects of user
+module.exports.updateUser = async (req, res) => {
+    try{
+        const updateDTO = req.body;
 
+        if(!updateDTO.userId) return res.type('json').status(400).send('A user id must be provided');   
+    
+        // Check if the username exists
+        var searchedUser = await user.findOne({_id:updateDTO.userId}).exec();
+        
+        if (!searchedUser){             
+            return res.type('json').status(404).send("User to update was not found.");  
+        }else{
+
+            let updateParams = _.pick(updateDTO, ['displayName', 'age', 'gender', 'playerType', 'aboutMe']);
+            const updatedUser = await user.findOneAndUpdate({userId:updateDTO.userId}, 
+                                                               {...updateParams},
+                                                               {returnOriginal: false});
+            
+            return res.type('json').status(200).send(updatedUser);
+        }
+       
+    }catch(err) {
+        return res.type('json').status(500).send(err.toString());   
+    }
+};
 
 /* Helper Functions */
 

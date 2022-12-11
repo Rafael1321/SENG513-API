@@ -9,4 +9,7 @@ router.route('/users/register')
 router.route('/users/login')
       .post(users.loginUser);
 
+router.route('/users/update')
+      .put(users.updateUser);
+
 module.exports = router;
