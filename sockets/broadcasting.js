@@ -63,7 +63,7 @@ function broadcasting(io){ // For connection and disconnection
                 socket.emit('error_match_found', 'Matched with id is invalid.')
             }else if(!connectedUsers.has(matchedWithId)){ // In case matched with id is not found
                 socket.emit('error_match_found', 'Matched with id does not exist.');
-            }else if(!connectedUsers.get(matchedWithId).online){
+            }else if(!connectedUsers.get(matchedWithId).online){ // In case taht user is offline
                 socket.emit('error_match_found', 'Matched with id belong to an OFFLINE user.');
             }else{
                 invalid = false;
@@ -92,4 +92,14 @@ function broadcasting(io){ // For connection and disconnection
     });
 }
 
-module.exports = { broadcasting };
+/* HELPER FUNCTIONS */
+
+function getOnlineUserIds(){
+    const onlineUsers = [];
+    for (let [userId, info] of connectedUsers) {
+        if(info.online) onlineUsers.push(userId);
+    }
+    return onlineUsers;
+}
+
+module.exports = { broadcasting, getOnlineUserIds };
