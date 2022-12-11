@@ -8,13 +8,13 @@ module.exports.registerUser = async (req, res) => {
         const{displayName, gameName, tagLine, email, password, avatarImage} = req.body;
         
         // Validation of body variables 
-        if(!gameName)    return res.type('json').status(404).send({data:'The game name is missing'});   
-        if(!tagLine)    return res.type('json').status(404).send({data:'The tag line is missing'});   
-        if(!email)    return res.type('json').status(404).send({data:'The email is missing'});   
-        if(!password) return res.type('json').status(404).send({data:'The password is missing'});   
+        if(!gameName)    return res.type('json').status(404).send('The game name is missing');   
+        if(!tagLine)     return res.type('json').status(404).send('The tag line is missing');   
+        if(!email)       return res.type('json').status(404).send('The email is missing');   
+        if(!password)    return res.type('json').status(404).send('The password is missing');   
         
         let searchedUser = await user.findOne({gameName:gameName, tagLine:tagLine}).exec();
-        if(searchedUser !== null) return res.type('json').status(400).send({msg:"Game name and tagline combination already in use."});  
+        if(searchedUser) return res.type('json').status(400).send("Game name and tagline combination already in use.");  
 
         // Getting user's extra info from riot's api
         const baseUrl1 = process.env.RIOT_BASE_URL1;
@@ -32,7 +32,9 @@ module.exports.registerUser = async (req, res) => {
 
         const newUser = new user({ 
             riotId: extraData.puuid,
-            displayName: !displayName?'':displayName,
+            displayName: !displayName?gameName:displayName,
+            gameName: gameName,
+            tagLine: tagLine,
             email: email,
             password: await bcrypt.hash(password, await bcrypt.genSalt(10)),
             avatarImage: avatarImage,
@@ -43,10 +45,10 @@ module.exports.registerUser = async (req, res) => {
 
         await newUser.save();
 
-        return res.type('json').status(201).send({data: _.pick(newUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe'])});  
+        return res.type('json').status(201).send( _.pick(newUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe']));  
 
     }catch(err){
-        return res.type('json').status(500).send({data:err.toString()});   
+        return res.type('json').status(500).send(err.toString());   
     }
 }
 
@@ -54,25 +56,25 @@ module.exports.loginUser = async (req, res) => {
     try{
         const {email, password} = req.body;
 
-        if(email == undefined || email === '' || email === null) return res.type('json').status(404).send({msg:'The username is missing'});   
-        if(password == undefined || password === '' || password === null) return res.type('json').status(404).send({msg:'The password is missing'});   
+        if(!email) return res.type('json').status(404).send('The username is missing');   
+        if(!password) return res.type('json').status(404).send('The password is missing');   
         
         // Check if the username exists
         var searchedUser = await user.findOne({email:email}).select("+password").exec();
         
-        if (searchedUser === null){             
-            return res.type('json').status(404).send({msg:"User was not found."});  
+        if (!searchedUser){             
+            return res.type('json').status(404).send("User was not found.");  
         }else{
             // Check if the passwords match
             const isPasswordValid = await bcrypt.compare(password, searchedUser.password);
             if(!isPasswordValid){
-                return res.type('json').status(404).send({msg:"The password is incorrect."});   
+                return res.type('json').status(404).send("The password is incorrect.");   
             }
-            return res.type('json').status(200).send({"data":_.pick(searchedUser, ['_id', 'riotId', 'displayName', 'email', 'isAvatarSet', 'avatarImage'])}); 
+            return res.type('json').status(200).send(_.pick(searchedUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe'])); 
         }
        
     }catch(err) {
-        return res.type('json').status(500).send({msg:err.toString()});   
+        return res.type('json').status(500).send(err.toString());   
     }
 };
 
