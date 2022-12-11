@@ -104,6 +104,28 @@ module.exports.updateUser = async (req, res) => {
     }
 };
 
+// Implement end-point to retrieve a user by ID (we only have login)
+
+module.exports.findUser = async (req, res) => {
+    try{
+        const userId = req.params.userId;
+
+        if(!userId) return res.type('json').status(400).send('Invalid user id provided.');   
+        
+        // Find the user
+        var searchedUser = await user.findOne({_id:userId}).exec();
+        
+        if (!searchedUser){             
+            return res.type('json').status(404).send("User was not found.");  
+        }else{
+            return res.type('json').status(200).send(_.pick(searchedUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe'])); 
+        }
+       
+    }catch(err) {
+        return res.type('json').status(500).send(err.toString());   
+    }
+};
+
 /* Helper Functions */
 
 function toRegionNo(region){

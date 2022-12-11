@@ -3,6 +3,9 @@ const router = express.Router({ mergeParams: true });
 
 const users = require("../controllers/users");
 
+router.route('/users/:userId')
+      .get(users.findUser);
+
 router.route('/users/register')
       .post(users.registerUser);
 
