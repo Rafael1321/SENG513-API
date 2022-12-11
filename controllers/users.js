@@ -8,13 +8,13 @@ module.exports.registerUser = async (req, res) => {
         const{displayName, gameName, tagLine, email, password, avatarImage} = req.body;
         
         // Validation of body variables 
-        if(!gameName)    return res.type('json').status(404).send({data:'The game name is missing'});   
-        if(!tagLine)     return res.type('json').status(404).send({data:'The tag line is missing'});   
-        if(!email)       return res.type('json').status(404).send({data:'The email is missing'});   
-        if(!password)    return res.type('json').status(404).send({data:'The password is missing'});   
+        if(!gameName)    return res.type('json').status(404).send('The game name is missing');   
+        if(!tagLine)     return res.type('json').status(404).send('The tag line is missing');   
+        if(!email)       return res.type('json').status(404).send('The email is missing');   
+        if(!password)    return res.type('json').status(404).send('The password is missing');   
         
         let searchedUser = await user.findOne({gameName:gameName, tagLine:tagLine}).exec();
-        if(searchedUser) return res.type('json').status(400).send({data:"Game name and tagline combination already in use."});  
+        if(searchedUser) return res.type('json').status(400).send("Game name and tagline combination already in use.");  
 
         // Getting user's extra info from riot's api
         const baseUrl1 = process.env.RIOT_BASE_URL1;
@@ -48,7 +48,7 @@ module.exports.registerUser = async (req, res) => {
         return res.type('json').status(201).send( _.pick(newUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe']));  
 
     }catch(err){
-        return res.type('json').status(500).send({data:err.toString()});   
+        return res.type('json').status(500).send(err.toString());   
     }
 }
 
@@ -74,7 +74,7 @@ module.exports.loginUser = async (req, res) => {
         }
        
     }catch(err) {
-        return res.type('json').status(500).send({data:err.toString()});   
+        return res.type('json').status(500).send(err.toString());   
     }
 };
 
