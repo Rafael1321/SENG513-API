@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const FiltersSchema = new Schema({
+    userId: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     serverPreference: {
         type: Number,
         required: false,
@@ -27,10 +32,10 @@ const FiltersSchema = new Schema({
         default: [18, 25]
     },
     genders: {
-        type: Number,
+        type: Array,
         required: false,
         unique: false,
-        default: 0
+        default: [true, true, true, true]
     }
 });
 
