@@ -89,6 +89,8 @@ function broadcasting(io){ // For connection and disconnection
             socket.broadcast.emit("receive_msg", data)
         })
 
+        
+
         /* DISCONNECT*/
         io.on("disconnect", (socket) => {
     

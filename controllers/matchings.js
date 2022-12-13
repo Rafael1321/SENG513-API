@@ -59,7 +59,7 @@ module.exports.findMatch = async (req, res) => {
         if(!userFound){ // No user was found
             res.type('json').status(404).send('Could not find a match. Try again later!'); 
         }else{  
-            res.type('json').status(200).send( _.pick(searchedUser, ['_id', 'riotId', 'displayName', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe']));  
+            res.type('json').status(200).send( _.pick(searchedUser, ['_id', 'riotId', 'displayName', 'gameName','tagLine', 'email', 'avatarImage', 'rank', 'accountLevel', 'region', 'age', 'gender', 'reputation', 'playerType', 'aboutMe']));  
         }
     }catch(err){
         return res.type('json').status(500).send(err.toString());
