@@ -1,6 +1,6 @@
 
 // Used to keep track of who is connected and know their socket
-const connectedUsers = new Map();
+var connectedUsers = new Map();
 
 function broadcasting(io){ // For connection and disconnection
 
@@ -16,7 +16,7 @@ function broadcasting(io){ // For connection and disconnection
             // Add new connected user to Map
             if(!connectedUsers.has(connectedUserId)){
                 connectedUsers.set(connectedUserId, {socket:socket, online:false});
-                socket.emit(`success_user_connected`, {msg:`User with id ${connectedUserId} is set as connected.`});
+                socket.emit(`success_user_connected`, {msg:`User with id ${connectedUserId} CONNECTED.`});
             }else{
                 socket.emit(`error_user_connected`, {msg:`User with id ${connectedUserId} is already connected.`});
             }
@@ -41,12 +41,12 @@ function broadcasting(io){ // For connection and disconnection
             // Set the user as "online"
             connectedUsers.set(userId, {...connectedUsers.get(userId), online:true});
 
-            socket.emit('success_find_matching', {msg:'User succesfully marked as online.'});
+            socket.emit('success_find_matching', {msg:`User with id ${userId} ONLINE.`});
         });
 
         socket.on('stop_matching', (userId) => {
             // In case user id is invalid.
-            if(!user){
+            if(!userId){
                 socket.emit('error_stop_matching',{msg:'User id is invalid.'});
                 return;
             }
@@ -60,7 +60,7 @@ function broadcasting(io){ // For connection and disconnection
             // Set the user as "offline"
             connectedUsers.set(userId, {...connectedUsers.get(userId), online:false});
 
-            socket.emit('success_stop_matching', {msg:'User succesfully marked as offline.'});
+            socket.emit('success_stop_matching', {msg:`User with id ${userId} OFFLINE`});
         });
 
         socket.on('match_found', (myId, matchedWithId) => {
@@ -118,10 +118,10 @@ function getUserIdFromSocketId(socketId){
     return userId;
 }
 
-function getOnlineUserIds(){
+function getOnlineUserIds(exceptId){
     const onlineUsers = [];
     for (let [userId, info] of connectedUsers) {
-        if(info.online) onlineUsers.push(userId);
+        if(info.online && userId !== exceptId) onlineUsers.push(userId);
     }
     return onlineUsers;
 }

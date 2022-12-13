@@ -3,7 +3,7 @@ const router = express.Router({ mergeParams: true });
 
 const matchings = require("../controllers/matchings");
 
-router.route('/matchings/:userId')
+router.route('/matchings')
       .post(matchings.findMatch);
 
 module.exports = router;
