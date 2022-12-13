@@ -4,8 +4,8 @@ const dotenv = require('dotenv');
 const path = require('path');
 const { Server } = require("socket.io");
 const { createServer } = require('http');
-const {broadcasting} = require('./sockets/broadcasting')
-
+const {broadcasting} = require('./sockets/broadcasting');
+const cors=require("cors");
 
 // DotEnv Configuration
 dotenv.config();
@@ -31,21 +31,20 @@ const appConfig = { port : process.env.APP_PORT ?? '5000' }
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(function (req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', `http://${process.env.UI_HOST}:${process.env.UI_PORT}`);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    next();
-});
-
+app.use(cors({
+    origin:'*', 
+    credentials:true,            
+    optionSuccessStatus:200,
+ }));
 
 // Route Configuration
 const userRoutes = require("./routes/users");
 const filtersRoutes = require("./routes/filters");
+const matchingRoutes = require("./routes/matchings");
 
 app.use("/", userRoutes);
 app.use("/", filtersRoutes);
+app.use("/", matchingRoutes);
 
 // Starting the node.js server
 app.listen(appConfig.port, () => {
