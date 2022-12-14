@@ -5,13 +5,19 @@ module.exports.saveCommendation = async (req, res) => {
     try{
         const {commenderId, commendedId, score} = req.body;
 
+        console.log(commenderId);
+        console.log(commendedId);
+        console.log(score);
+
         if(!commenderId)              return res.type('json').status(400).send("Commender id was not provided.");
         if(!commendedId)              return res.type('json').status(400).send("Commended id was not provided.");
         if(!score)                    return res.type('json').status(400).send("Score was not provided.");
         if(score <= 0 || score > 10)  return res.type('json').status(400).send("Score must be >= 1 and <= 10");
 
         // Make sure the person is not commending again
-        let foundCommendation = commendation.findOne({$and: [{commendedId:commendedId}, {commenderId:commenderId}]})
+        let foundCommendation = await commendation.findOne({$and: [{commendedId:commendedId}, {commenderId:commenderId}]}).exec();
+        
+        console.log(foundCommendation);
         if(foundCommendation) return res.type('json').status(400).send("You have already commended this user.");
 
         // Compute average reputation of commended person
