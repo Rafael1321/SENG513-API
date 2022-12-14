@@ -17,7 +17,7 @@ const ChatsSchema = new Schema({
         required: true,
         unique: false,
     },
-    timeStamp : {
+    timestamp : {
         type: Date,
         required: false,
         unique: false,

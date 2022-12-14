@@ -11,6 +11,12 @@ const MatchingSchema = new Schema({
         type: String,
         required: true,
         unique: false
+    },
+    timestamp : {
+        type: Date,
+        required: false,
+        unique: false,
+        default: Date.now
     }
 });
 

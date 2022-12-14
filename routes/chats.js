@@ -4,7 +4,7 @@ const router = express.Router({ mergeParams: true });
 const chats = require("../controllers/chats");
 
 router.route('/chats')
-      .get(chats.retrieveMessages);
+      .post(chats.retrieveMessages);
 
 router.route('/chats')
       .post(chats.saveMessage);
