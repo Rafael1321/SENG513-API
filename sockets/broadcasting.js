@@ -76,8 +76,6 @@ function broadcasting(io){ // For connection and disconnection
                 // Add current user to the queue
                 matchingQueue.push(findMatchDTO.userId);
             }     
-            
-            console.log(matchingQueue);
         });
 
         socket.on('stop_matching', (userId) => {
@@ -97,13 +95,22 @@ function broadcasting(io){ // For connection and disconnection
             matchingQueue = immutableRemove(matchingQueue.indexOf(userId), matchingQueue);
 
             socket.emit('success_stop_matching', {msg:`User with id ${userId} OFFLINE`});
-
-            console.log(matchingQueue);
         });
 
         /* CHAT */
-        socket.on("send_msg" , (data) => {
-            socket.broadcast.emit("receive_msg", data)
+        socket.on("send_msg" , (receiverId, msg) => { // msg = Text 
+
+            if(!receiverId){
+                socket.emit('error_send_msg', {msg:"Invalid receiver id."});
+                return;
+            }
+
+            if(!connectedUsers.has(receiverId)){
+                socket.emit('error_send_msg', {msg:"User wit that id is not online."})
+                return;
+            }
+
+            connectedUsers.get(receiverId).socket.emit("receive_msg", {msg:msg});
         });
 
         /* DISCONNECT*/
