@@ -1,5 +1,6 @@
 const user = require("../models/user");
 const matching = require("../models/matching");
+const filter = require("../models/filter");
 
 // Used to keep track of who is connected and know their socket
 const connectedUsers = new Map();
@@ -34,6 +35,10 @@ function broadcasting(io){ // For connection and disconnection
                 socket.emit('error_find_matching',{msg:'User id is invalid.'});
                 return;
             }
+            if(!findMatchDTO.filters){
+                socket.emit('error_find_matching', {msg:"Filters are invalid."});
+                return;
+            }
 
             // In case user id is not found
             if(!connectedUsers.has(findMatchDTO.userId)){
@@ -48,7 +53,10 @@ function broadcasting(io){ // For connection and disconnection
             const user1 = await user.findOne({_id:findMatchDTO.userId}).exec();
             for(let i = 0; i < matchingQueue.length; i++){
                 let userId2 = matchingQueue[i];
-                if(notPreviouslyMatchedWith(findMatchDTO.userId, userId2)){ // && satisfiesFilters(userId2);
+                console.log("Not Previously Match: " + notPreviouslyMatchedWith(findMatchDTO.userId, userId2));
+                console.log("Satisfied Filters: " + satisfiesFilters(user1, findMatchDTO.filters, userId2));
+                
+                if(notPreviouslyMatchedWith(findMatchDTO.userId, userId2) && satisfiesFilters(user1, findMatchDTO.filters, userId2) ){
                     matchFound = i;
                     break;
                 }
@@ -148,16 +156,40 @@ async function notPreviouslyMatchedWith(userId1, userId2){
     return !match1 && !match2;
 }
 
-function satisfiesFilters(userId){
+async function satisfiesFilters(user1, user1Filters, user2Id){
 
-    const searchedUser = user.findOne({_id:userId}).exec();
+    const user2 = await user.findOne({_id:user2Id}).exec();
+    const user2Filters = await filter.findOne({userId:user2Id}).exec();
 
-    const regionMatched = searchedUser.region === filters.serverPreference;
-    const playerTypeMatched = searchedUser.playerType === filters.gameMode;
-    const rankMatched = (searchedUser.rank[0] >= filters.rankDisparity[0] && searchedUser.rank[1] >= filters.rankDisparity[1]) && 
-                        (searchedUser.rank[0] <= filters.rankDisparity[2] && searchedUser.rank[1] <= filters.rankDisparity[3])
-    const ageMatched = searchedUser.age >= filters.ageRange[0] && searchedUser.age <= filters.ageRange[1];
-    const genderMatched = searchedUser.gender === -1?false:filters.genders[searchedUser.gender] 
+    // Region Matched
+    const regionMatched = (user1.region === user2Filters.serverPreference) && (user2.region === user1Filters.serverPreference);
+    
+    // Game Mode Type
+    const playerTypeMatched = (user1.playerType === user2Filters.gameMode) && (user2.playerType === user1Filters.gameMode);
+    
+    // Rank Macthed
+    const rankMatchedUser1 = (user1.rank[0] >= user2Filters.rankDisparity[0] && user1.rank[1] >= user2Filters.rankDisparity[1]) && 
+                             (user1.rank[0] <= user2Filters.rankDisparity[2] && user1.rank[1] <= user2Filters.rankDisparity[3]);
+    const rankMatchedUser2 = (user2.rank[0] >= user1Filters.rankDisparity[0] && user2.rank[1] >= user1Filters.rankDisparity[1]) && 
+                             (user2.rank[0] <= user1Filters.rankDisparity[2] && user2.rank[1] <= user1Filters.rankDisparity[3]);;
+    const rankMatched = rankMatchedUser1 && rankMatchedUser2;
+    
+    // Age Matched
+    const ageMatched = (user1.age >= user2Filters.ageRange[0] && user1.age <= user2Filters.ageRange[1]) && 
+                       (user2.age >= user1Filters.ageRange[0] && user2.age <= user1Filters.ageRange[1]);
+    
+    // Gender Matched
+    let genderMatched = false;
+    if(user1.gender !== -1 && user2.gender !== -1){
+        genderMatched = user2Filters[user1.gender] && user1Filters[user2.gender];
+    }
+
+    console.log("RegionMatched: " + regionMatched);
+    console.log("PlayerTypeMatched: " + playerTypeMatched);
+    console.log("RankMatched: " + rankMatched);
+    console.log("AgeMatched: " + rankMatched);
+    console.log("GenderMatched: " + rankMatched);
+    console.log("===============================")
 
     return regionMatched && playerTypeMatched && rankMatched && ageMatched && genderMatched;
 }

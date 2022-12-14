@@ -91,7 +91,7 @@ module.exports.updateUser = async (req, res) => {
             return res.type('json').status(404).send("User to update was not found.");  
         }else{
 
-            let updateParams = _.pick(updateDTO, ['displayName', 'age', 'gender', 'playerType', 'aboutMe']);
+            let updateParams = _.pick(updateDTO, ['displayName', 'age', 'gender', 'playerType', 'aboutMe', 'avatarImage']);
             const updatedUser = await user.findOneAndUpdate({_id:updateDTO.userId}, 
                                                                {...updateParams},
                                                                {returnOriginal: false});
