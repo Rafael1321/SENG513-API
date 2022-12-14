@@ -41,14 +41,16 @@ app.use(cors({
 const userRoutes = require("./routes/users");
 const filtersRoutes = require("./routes/filters");
 const matchingRoutes = require("./routes/matchings");
+const chatRoutes = require("./routes/chats");
 
 app.use("/", userRoutes);
 app.use("/", filtersRoutes);
 app.use("/", matchingRoutes);
+app.use("/", chatRoutes);
 
 // Starting the node.js server
 app.listen(appConfig.port, () => {
-    console.log(`Serving node server on port ${appConfig.port}`);
+    console.log(`Serving express server on port ${appConfig.port}`);
 });
 
 // Socket configuration
