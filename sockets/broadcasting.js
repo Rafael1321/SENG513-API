@@ -51,39 +51,63 @@ function broadcasting(io){ // For connection and disconnection
             // Attempting to find a match
             let matchFound = -1;
             const user1 = await user.findOne({_id:findMatchDTO.userId}).exec();
-            for(let i = 0; i < matchingQueue.length; i++){
-                let userId2 = matchingQueue[i];
-                console.log("Not Previously Match: " + notPreviouslyMatchedWith(findMatchDTO.userId, userId2));
-                console.log("Satisfied Filters: " + satisfiesFilters(user1, findMatchDTO.filters, userId2));
-                
-                if(notPreviouslyMatchedWith(findMatchDTO.userId, userId2) && satisfiesFilters(user1, findMatchDTO.filters, userId2) ){
-                    matchFound = i;
-                    break;
-                }
-            }
+            const user1Filters = findMatchDTO.filters;
+            for(let i = 0; i < matchingQueue.length && matchFound == -1; i++){
+                var user2Id = matchingQueue[i];
+                matching.countDocuments( {$or: [ { $and:[ {'firstUser':  findMatchDTO.userId}, {'secondUser': user2Id} ]}, { $and:[ {'firstUser':  user2Id}, {'secondUser': findMatchDTO.userId} ]}]}).exec().then( count => {    
+                    if(!count){
+                        user.findOne({_id:user2Id}).exec().then( user2 => {
+                            filter.findOne({userId:user2Id}).exec().then( user2Filters => {
+                                
+                                // Region Matched
+                                const regionMatched = (user1.region === user2Filters.serverPreference) && (user2.region === user1Filters.serverPreference);
+                                
+                                // Game Mode Type
+                                const playerTypeMatched = (user1.playerType === user2Filters.gameMode) && (user2.playerType === user1Filters.gameMode);
+                                
+                                // Rank Macthed
+                                const rankMatchedUser1 = (user1.rank[0] + user1.rank[1] >= user2Filters.rankDisparity[0] + user2Filters.rankDisparity[1]) && 
+                                                         (user1.rank[0] + user1.rank[1] <= user2Filters.rankDisparity[2] + user2Filters.rankDisparity[3]);
+                                const rankMatchedUser2 = (user2.rank[0] >= user1Filters.rankDisparity[0] && user2.rank[1] >= user1Filters.rankDisparity[1]) && 
+                                                        (user2.rank[0] <= user1Filters.rankDisparity[2] && user2.rank[1] <= user1Filters.rankDisparity[3]);;
+                                const rankMatched = rankMatchedUser1 && rankMatchedUser2;
+                                
+                                // Age Matched
+                                const ageMatched = (user1.age >= user2Filters.ageRange[0] && user1.age <= user2Filters.ageRange[1]) && 
+                                                (user2.age >= user1Filters.ageRange[0] && user2.age <= user1Filters.ageRange[1]);
+                                
+                                // Gender Matched
+                                let genderMatched = false;
+                                if(user1.gender !== -1 && user2.gender !== -1){
+                                    genderMatched = user2Filters.genders[user1.gender] && user1Filters.genders[user2.gender];
+                                }
 
-            if(matchFound !== -1){
-
-                // Get matched user info 
-                const user2 = await user.findOne({_id:matchingQueue[matchFound]}).exec();
-
-                // Notify each user of the match and remove the matched user from queue
-                socket.emit('match_found', {user:user2});
-                connectedUsers.get(matchingQueue[matchFound]).socket.emit('match_found', {user:user1});
-                
-                // Store matching in the DB
-                const newMatch = new matching({ 
-                    firstUser: findMatchDTO.userId,
-                    secondUser: matchingQueue[matchFound],
+                                // They are match based on filters...
+                                if(regionMatched && playerTypeMatched && rankMatched && ageMatched && genderMatched){
+                                    
+                                    // Notify each user of the match and remove the matched user from queue
+                                    socket.emit('match_found', {user:user2});
+                                    connectedUsers?.get(user2Id)?.socket?.emit('match_found', {user:user1});
+                                    
+                                    // Store matching in the DB
+                                    const newMatch = new matching({ 
+                                        firstUser: findMatchDTO.userId,
+                                        secondUser: user2Id,
+                                    });
+                                    newMatch.save();
+                                    
+                                    // Remove matched user from queue 
+                                    matchingQueue = immutableRemove(matchFound, matchingQueue);
+                                    matchFound = i;
+                                }                
+                            });
+                        });
+                    }
                 });
-                newMatch.save();
-                
-                // Remove matched user from queue 
-                matchingQueue = immutableRemove(matchFound, matchingQueue);
-            }else{
-                // Add current user to the queue
-                matchingQueue.push(findMatchDTO.userId);
-            }     
+            }
+            if(matchFound === -1){
+                matchingQueue.push(findMatchDTO.userId);     
+            } 
         });
 
         socket.on('stop_matching', (userId) => {
@@ -146,52 +170,6 @@ function getUserIdFromSocketId(socketId){
         }
     }
     return userId;
-}
-
-async function notPreviouslyMatchedWith(userId1, userId2){
-
-    const match1 = await matching.find({ $and:[ {'firstUser':  userId1}, {'secondUser': userId2} ]}).exec();
-    const match2 = await matching.find({ $and:[ {'firstUser':  userId2}, {'secondUser': userId1} ]}).exec();
-
-    return !match1 && !match2;
-}
-
-async function satisfiesFilters(user1, user1Filters, user2Id){
-
-    const user2 = await user.findOne({_id:user2Id}).exec();
-    const user2Filters = await filter.findOne({userId:user2Id}).exec();
-
-    // Region Matched
-    const regionMatched = (user1.region === user2Filters.serverPreference) && (user2.region === user1Filters.serverPreference);
-    
-    // Game Mode Type
-    const playerTypeMatched = (user1.playerType === user2Filters.gameMode) && (user2.playerType === user1Filters.gameMode);
-    
-    // Rank Macthed
-    const rankMatchedUser1 = (user1.rank[0] >= user2Filters.rankDisparity[0] && user1.rank[1] >= user2Filters.rankDisparity[1]) && 
-                             (user1.rank[0] <= user2Filters.rankDisparity[2] && user1.rank[1] <= user2Filters.rankDisparity[3]);
-    const rankMatchedUser2 = (user2.rank[0] >= user1Filters.rankDisparity[0] && user2.rank[1] >= user1Filters.rankDisparity[1]) && 
-                             (user2.rank[0] <= user1Filters.rankDisparity[2] && user2.rank[1] <= user1Filters.rankDisparity[3]);;
-    const rankMatched = rankMatchedUser1 && rankMatchedUser2;
-    
-    // Age Matched
-    const ageMatched = (user1.age >= user2Filters.ageRange[0] && user1.age <= user2Filters.ageRange[1]) && 
-                       (user2.age >= user1Filters.ageRange[0] && user2.age <= user1Filters.ageRange[1]);
-    
-    // Gender Matched
-    let genderMatched = false;
-    if(user1.gender !== -1 && user2.gender !== -1){
-        genderMatched = user2Filters[user1.gender] && user1Filters[user2.gender];
-    }
-
-    console.log("RegionMatched: " + regionMatched);
-    console.log("PlayerTypeMatched: " + playerTypeMatched);
-    console.log("RankMatched: " + rankMatched);
-    console.log("AgeMatched: " + rankMatched);
-    console.log("GenderMatched: " + rankMatched);
-    console.log("===============================")
-
-    return regionMatched && playerTypeMatched && rankMatched && ageMatched && genderMatched;
 }
 
 function immutableRemove(idx, array){
