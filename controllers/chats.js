@@ -31,18 +31,13 @@ module.exports.retrieveMessages = async (req, res) => {
         if(!senderId)   return res.type('json').status(400).send("Sender id was not provided.");
         if(!receiverId) return res.type('json').status(400).send("Receiver id was not provided.");
 
-        await chats.find({$or : [{}]})
+        const messages = [];
+        const cursor = chats.find({$or : [{$and:[{senderId:senderId}, {receiverId:receiverId}]}, {$and:[{senderId:receiverId}, {receiverId:senderId}]}]}).sort("timestamp").cursor();
+        for (let message = await cursor.next(); message != null; message = await cursor.next()) {
+            messages.push({senderId:message.senderId, receiverId:message.receiverId, message:message.message});
+        }
 
-
-        // sender is userId
-
-        // senderId : string, 
-        // receiverId : string,
-        // message: string; 
-
-
-
-
+        return res.type('json').status(200).send(messages);
 
     }catch(err) {
         return res.type('json').status(500).send(err.toString());   
