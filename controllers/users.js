@@ -92,7 +92,7 @@ module.exports.updateUser = async (req, res) => {
         }else{
 
             let updateParams = _.pick(updateDTO, ['displayName', 'age', 'gender', 'playerType', 'aboutMe']);
-            const updatedUser = await user.findOneAndUpdate({userId:updateDTO.userId}, 
+            const updatedUser = await user.findOneAndUpdate({_id:updateDTO.userId}, 
                                                                {...updateParams},
                                                                {returnOriginal: false});
             

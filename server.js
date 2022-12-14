@@ -42,11 +42,13 @@ const userRoutes = require("./routes/users");
 const filtersRoutes = require("./routes/filters");
 const matchingRoutes = require("./routes/matchings");
 const chatRoutes = require("./routes/chats");
+const commendationRoutes = require("./routes/commendations");
 
 app.use("/", userRoutes);
 app.use("/", filtersRoutes);
 app.use("/", matchingRoutes);
 app.use("/", chatRoutes);
+app.use("/", commendationRoutes)
 
 // Starting the node.js server
 app.listen(appConfig.port, () => {
