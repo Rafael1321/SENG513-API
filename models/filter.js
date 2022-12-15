@@ -23,7 +23,7 @@ const FiltersSchema = new Schema({
         type: Array,
         required: false,
         unique: false,
-        default: [1, 9]
+        default: [1, 1, 5, 2]
     },
     ageRange:{
         type: Array,
