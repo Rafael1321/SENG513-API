@@ -167,7 +167,7 @@ function parseRank(rank){
         case 'gold':
             rankType = 4;
             break;
-        case 'platinuk':
+        case 'platinum':
             rankType = 5;
             break;
         case 'diamond':

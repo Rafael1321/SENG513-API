@@ -36,7 +36,6 @@ function broadcasting(io){ // For connection and disconnection
             
             // save in database
             socket.emit(`success_user_connected`, {msg:`User with id ${connectedUserId} CONNECTED.`});
-            console.log(connectedUsers);
         }else{
             socket.emit(`error_user_connected`, {msg:`User with id ${connectedUserId} is already connected.`});
         }
@@ -188,8 +187,6 @@ function broadcasting(io){ // For connection and disconnection
             if(connectedUsers.has(connectedUserId)){
                 connectedUsers.delete(connectedUserId);
             }
-
-            console.log(connectedUsers);
         });
     });
 }
