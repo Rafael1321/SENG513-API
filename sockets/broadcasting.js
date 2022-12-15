@@ -1,5 +1,6 @@
 const user = require("../models/user");
 const matching = require("../models/matching");
+const socketModel = require("../models/socketModel");
 const filter = require("../models/filter");
 
 // Used to keep track of who is connected and know their socket
@@ -8,23 +9,37 @@ let matchingQueue = [];
 
 function broadcasting(io){ // For connection and disconnection
 
-    io.on("connection", (socket) => {
+    io.on("connection", async (socket) => {
 
-        socket.on('user_connected', (connectedUserId) => {
-            
-            if(!connectedUserId){
-                socket.emit(`error_user_connected`, {msg:`Invalid connected user id ${connectedUserId}.`});
-                return; 
-            }
-            
-            // Add new connected user to Map
-            if(!connectedUsers.has(connectedUserId)){
-                connectedUsers.set(connectedUserId, {socket:socket});
-                socket.emit(`success_user_connected`, {msg:`User with id ${connectedUserId} CONNECTED.`});
+        const connectedUserId = socket.handshake.query.userId;
+
+        if(!connectedUserId){
+            socket.emit(`error_user_connected`, {msg:`Invalid connected user id ${connectedUserId}.`});
+            return; 
+        }
+        
+        if(!connectedUsers.has(connectedUserId)){
+            connectedUsers.set(connectedUserId, socket.id);
+
+            // Check if entry exists in the db
+            const socketInfo = await socketModel.findOne({userId:connectedUserId}).exec();
+            if(socketInfo){
+                if(socketInfo.socketId !== socket.socketId){
+                    await socketModel.updateOne({userId:connectedUserId}, {socketId:socket.id}).exec();
+                }
             }else{
-                socket.emit(`error_user_connected`, {msg:`User with id ${connectedUserId} is already connected.`});
+                await new socketModel({
+                    userId: connectedUserId,
+                    socketId: socket.id
+                }).save();
             }
-        });
+            
+            // save in database
+            socket.emit(`success_user_connected`, {msg:`User with id ${connectedUserId} CONNECTED.`});
+            console.log(connectedUsers);
+        }else{
+            socket.emit(`error_user_connected`, {msg:`User with id ${connectedUserId} is already connected.`});
+        }
 
         /* MATCHING */
 
@@ -66,10 +81,8 @@ function broadcasting(io){ // For connection and disconnection
                                 const playerTypeMatched = (user1.playerType === user2Filters.gameMode) && (user2.playerType === user1Filters.gameMode);
                                 
                                 // Rank Macthed
-                                const rankMatchedUser1 = (user1.rank[0] + user1.rank[1] >= user2Filters.rankDisparity[0] + user2Filters.rankDisparity[1]) && 
-                                                         (user1.rank[0] + user1.rank[1] <= user2Filters.rankDisparity[2] + user2Filters.rankDisparity[3]);
-                                const rankMatchedUser2 = (user2.rank[0] >= user1Filters.rankDisparity[0] && user2.rank[1] >= user1Filters.rankDisparity[1]) && 
-                                                        (user2.rank[0] <= user1Filters.rankDisparity[2] && user2.rank[1] <= user1Filters.rankDisparity[3]);;
+                                const rankMatchedUser1 = (user1.rank[0]  >= user2Filters.rankDisparity[0] && user1.rank[0] <= user2Filters.rankDisparity[2]);
+                                const rankMatchedUser2 = (user2.rank[0]  >= user1Filters.rankDisparity[0] && user2.rank[0] <= user1Filters.rankDisparity[2]);
                                 const rankMatched = rankMatchedUser1 && rankMatchedUser2;
                                 
                                 // Age Matched
@@ -87,8 +100,18 @@ function broadcasting(io){ // For connection and disconnection
                                     
                                     // Notify each user of the match and remove the matched user from queue
                                     socket.emit('match_found', {user:user2});
-                                    connectedUsers?.get(user2Id)?.socket?.emit('match_found', {user:user1});
-                                    
+
+                                    if(!connectedUsers.has(user2Id)){
+                                        socketModel.findOne({userId:receiverId}).exec().then( socketInfo => {
+                                            if(socketInfo){
+                                                connectedUsers.set(socketInfo.userId, socketInfo.socketId);
+                                                io.to(socketInfo.socketId).emit('match_found', {user:user1}); 
+                                            }
+                                        });
+                                    }else{
+                                        io.to(connectedUsers?.get(user2Id)).emit('match_found', {user:user1}); // TODO: add DB call if not in there
+                                    }
+
                                     // Store matching in the DB
                                     const newMatch = new matching({ 
                                         firstUser: findMatchDTO.userId,
@@ -130,7 +153,7 @@ function broadcasting(io){ // For connection and disconnection
         });
 
         /* CHAT */
-        socket.on("send_msg" , (receiverId, msg) => { // msg = Text 
+        socket.on("send_msg" , async (receiverId, msg) => { // msg = Text 
 
             if(!receiverId){
                 socket.emit('error_send_msg', {msg:"Invalid receiver id."});
@@ -138,15 +161,25 @@ function broadcasting(io){ // For connection and disconnection
             }
 
             if(!connectedUsers.has(receiverId)){
-                socket.emit('error_send_msg', {msg:"User wit that id is not online."})
-                return;
-            }
+                
+                // Check if it exists in DB
+                const socketInfo = await socketModel.findOne({userId:receiverId}).exec();
 
-            connectedUsers.get(receiverId).socket.emit("receive_msg", {msg:msg});
+                if(!socketInfo){    
+                    socket.emit('error_send_msg', {msg:"User with that id is not online."})
+                    return;
+                }else{
+                    connectedUsers.set(receiverId, socketInfo.socketId);
+                    io.to(socketInfo.socketId).emit("receive_msg", {msg:msg});
+                }
+
+            }else{
+                io.to(connectedUsers?.get(receiverId)).emit("receive_msg", {msg:msg});
+            }
         });
 
         /* DISCONNECT*/
-        io.on("disconnect", (socket) => {
+        socket.on("disconnect", (socket) => {
     
             const connectedUserId = getUserIdFromSocketId(socket.id);
             if(!connectedUserId) return; 
@@ -155,6 +188,8 @@ function broadcasting(io){ // For connection and disconnection
             if(connectedUsers.has(connectedUserId)){
                 connectedUsers.delete(connectedUserId);
             }
+
+            console.log(connectedUsers);
         });
     });
 }
@@ -164,7 +199,7 @@ function broadcasting(io){ // For connection and disconnection
 function getUserIdFromSocketId(socketId){
     let userId = "";
     for (let [uId, info] of connectedUsers) {
-        if(info.socket.id === socketId){
+        if(info.socketId === socketId){
             userId = uId;
             break;
         }
